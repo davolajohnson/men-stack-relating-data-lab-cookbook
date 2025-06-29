@@ -6,26 +6,16 @@
   <title>My Pantry</title>
 </head>
 <body>
-  <%- include('../partials/_navbar') %>
+  <%- include('partials/_navbar') %>
 
   <h1>Welcome to My Pantry</h1>
 
-  <a href="/users/<%= user._id %>/foods/new">Add New Item</a>
-
-  <% if (user.pantry && user.pantry.length > 0) { %>
-    <ul>
-      <% user.pantry.forEach((item) => { %>
-        <li>
-          <%= item.name %>
-          <form action="/users/<%= user._id %>/foods/<%= item._id %>?_method=DELETE" method="POST" style="display:inline;">
-            <button type="submit">Delete</button>
-          </form>
-          <a href="/users/<%= user._id %>/foods/<%= item._id %>/edit">Edit</a>
-        </li>
-      <% }) %>
-    </ul>
+  <% if (user) { %>
+    <a href="/users/<%= user._id %>/foods">View My Pantry</a>
+    <a href="/users/<%= user._id %>/foods/new">Add New Item</a>
   <% } else { %>
-    <p>There are no items in this pantry.</p>
+    <p>Please sign in to manage your pantry.</p>
   <% } %>
 </body>
 </html>
+
