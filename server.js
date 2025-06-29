@@ -1,49 +1,52 @@
-const dotenv = require('dotenv');
-dotenv.config();
+// server.js
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
-const methodOverride = require('method-override');
-const morgan = require('morgan');
+const path = require('path');
 const session = require('express-session');
+const methodOverride = require('method-override');
+require('dotenv').config();
 
-const authController = require('./controllers/auth.js');
+// Load middleware
+const isSignedIn = require('./middleware/is-signed-in');
+const passUserToView = require('./middleware/pass-user-to-view');
 
-const port = process.env.PORT ? process.env.PORT : '3000';
-
+// Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI);
-
 mongoose.connection.on('connected', () => {
-  console.log(`Connected to MongoDB ${mongoose.connection.name}.`);
+  console.log(`Connected to MongoDB menstackcookbook.`);
 });
 
+// Middleware
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: false }));
 app.use(methodOverride('_method'));
-// app.use(morgan('dev'));
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+app.use(express.static('public'));
 
-app.get('/', (req, res) => {
-  res.render('index.ejs', {
-    user: req.session.user,
-  });
-});
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
 
-app.get('/vip-lounge', (req, res) => {
-  if (req.session.user) {
-    res.send(`Welcome to the party ${req.session.user.username}.`);
-  } else {
-    res.send('Sorry, no guests allowed.');
-  }
-});
+// Custom Middleware
+app.use(passUserToView);
+
+// Controllers
+const authController = require('./controllers/auth');
+const foodsController = require('./controllers/foods');
 
 app.use('/auth', authController);
+app.use(isSignedIn);
+app.use('/users/:userId/foods', foodsController);
 
-app.listen(port, () => {
-  console.log(`The express app is ready on port ${port}!`);
+// Root Route
+app.get('/', (req, res) => {
+  res.render('index.ejs');
+});
+
+// Start server
+app.listen(3000, () => {
+  console.log('The express app is ready on port 3000!');
 });
